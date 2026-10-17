@@ -1,0 +1,16 @@
+{
+  "name": "tibian",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tibian — Rua das Bases: jogo de bases para jogar 1x por dia",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/smoke.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
