@@ -11,6 +11,7 @@ let shopTab = 'forja';
 let busy = false;
 let worldW = 0;
 
+const DEMO = new URLSearchParams(location.search).has('demo');
 const $ = (s) => document.querySelector(s);
 const world = $('#world'), viewport = $('#viewport'), sizer = $('#sizer');
 
@@ -473,6 +474,10 @@ async function act(fn) {
 }
 
 function doAttack(p, layer) {
+  if (DEMO) {
+    const wp = W()[me().weapon];
+    return act(async () => { await animateHit(p, { dmg: Math.round(wp.dano * 1.1 * (wp.bonus[layer] || 1)), crit: false }); render(); demoOnly(); });
+  }
   act(async () => {
     const r = await api('/api/attack', { target: p.id, layer });
     await animateHit(p, r.result);
@@ -484,6 +489,7 @@ function doAttack(p, layer) {
   });
 }
 function doUpgrade(path) {
+  if (DEMO) return demoOnly();
   act(async () => {
     const r = await api('/api/upgrade', { path });
     apply(r.state);
@@ -491,9 +497,10 @@ function doUpgrade(path) {
     close();
   });
 }
-function doBuy(id) { act(async () => { const r = await api('/api/buy', { weapon: id }); apply(r.state); toast(`${W()[id].name} comprada e equipada.`); }); }
-function doEquip(id) { act(async () => { const r = await api('/api/equip', { weapon: id }); apply(r.state); }); }
+function doBuy(id) { if (DEMO) return demoOnly(); act(async () => { const r = await api('/api/buy', { weapon: id }); apply(r.state); toast(`${W()[id].name} comprada e equipada.`); }); }
+function doEquip(id) { if (DEMO) return demoOnly(); act(async () => { const r = await api('/api/equip', { weapon: id }); apply(r.state); }); }
 function doCoupon(code) {
+  if (DEMO) return demoOnly();
   if (!String(code).trim()) return toast('Digite o código.', true);
   act(async () => { const r = await api('/api/coupon', { code }); apply(r.state); toast(`Código aceito: ${W()[r.result.weapon].name}!`); });
 }
@@ -595,15 +602,47 @@ setInterval(() => {
   if (!S) return;
   const c = $('#clock');
   if (c) c.textContent = fmtClock(S.nextReset - now());
-  if (S.nextReset - now() < 0) refresh();
+  if (!DEMO && S.nextReset - now() < 0) refresh();
 }, 1000);
-setInterval(() => { if (token && document.visibilityState === 'visible' && !busy) refresh(); }, 30000);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && token) refresh(); });
+setInterval(() => { if (!DEMO && token && document.visibilityState === 'visible' && !busy) refresh(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!DEMO && document.visibilityState === 'visible' && token) refresh(); });
+
+
+// ---------- modo demonstração (?demo): rua de exemplo, sem conta e sem gravar nada ----------
+function demoState(st) {
+  const t = st.now, H = 3600000;
+  const base = { cerca: 30, muro: 80, portao: 60, nucleo: 100 };
+  const tierOf = (l) => (l >= 15 ? 5 : l >= 10 ? 4 : l >= 6 ? 3 : l >= 3 ? 2 : 1);
+  const mk = (id, nick, lot, color, [d, a, e], hp, extra = {}) => {
+    const level = 1 + d + a + e, tier = tierOf(level);
+    const max = Object.fromEntries(Object.entries(base).map(([k, v]) => [k, Math.round(v * (1 + 0.25 * (tier - 1)) * (1 + 0.15 * eff(d)))]));
+    return { id, nick, lot, color, level, tier, up: { def: d, atk: a, eco: e }, hp: { cerca: 1, muro: 1, portao: 1, nucleo: 1, ...hp }, max,
+      shieldUntil: null, fallen: false, trophies: 0, falls: 0, lastHitAt: null, seenAt: t - 2 * H, ...extra };
+  };
+  const players = [
+    mk(1, 'Bigode', 0, 2, [6, 5, 4], {}, { trophies: 4 }),
+    mk(2, 'Kaio_br', 1, 3, [2, 2, 2], { cerca: 0, portao: 0.62 }, { lastHitAt: t - H, falls: 1 }),
+    mk(3, 'LadyMorg', 2, 6, [5, 3, 2], { cerca: 0.7 }, { trophies: 2 }),
+    mk(4, 'Você', 3, 0, [1, 1, 1], {}, { seenAt: t }),
+    mk(5, 'Nyx', 4, 1, [0, 0, 0], {}, { shieldUntil: t + 20 * H }),
+    mk(6, 'Zé_Ferro', 5, 4, [3, 2, 2], {}, { fallen: true, shieldUntil: t + 18 * H, falls: 2, seenAt: t - 30 * H }),
+    mk(7, 'Tiozão', 6, 5, [1, 0, 2], { cerca: 0.4 }, { seenAt: t - 40 * H }),
+  ];
+  const me = { ...players[3], coins: 1240, income: 60, tok: { atk: 1, up: 1 }, weapon: 'martelo', inv: { martelo: 7, machado: 3 }, dmgMult: 1.1, coupons: 0 };
+  return { ...st, me, players, events: [
+    { at: t - 2 * H, kind: 'derrubou', text: 'Bigode derrubou a base de Zé_Ferro e o saque foi de 120 moedas' },
+    { at: t - 3 * H, kind: 'compra', text: `LadyMorg comprou Machado de Guerra na Forja ${st.partners.forja}` },
+    { at: t - 5 * H, kind: 'upgrade', text: 'Kaio_br subiu Muralha para o nível 2' },
+    { at: t - 9 * H, kind: 'chegou', text: 'Nyx chegou na rua' },
+  ] };
+}
+function demoOnly() { toast('Modo demonstração: crie sua base para jogar de verdade.', true); }
 
 // ---------- início ----------
 (async () => {
   try {
     const st = await api('/api/state');
+    if (DEMO) { apply(demoState(st)); scrollToLot(3); return; }
     apply(st);
     if (!st.me) showLogin();
     else scrollToLot(st.me.lot);
