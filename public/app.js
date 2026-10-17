@@ -187,14 +187,14 @@ function renderWorld() {
       img(p.fallen ? `ruins${side}.png` : `lot${p.tier}${side}.png`, { class: 'spr base' }),
       hurt ? img(`dmg${side}.png`, { class: 'spr' }) : null,
       p.shieldUntil && !p.fallen ? h('div', { class: 'dome' }) : null);
-    const plateY = row === 0 ? 262 : 40;
+    const plateY = row === 0 ? 256 : 40;
     const crown = topRank && topRank.trophies > 0 && topRank.id === p.id;
     lot.append(h('button', { class: 'plate' + (mine ? ' mine' : '') + (p.fallen ? ' fallen' : ''), style: `top:${plateY}px`, 'aria-label': `Base de ${p.nick}`,
       onclick: (e) => { e.stopPropagation(); open({ kind: 'base', id: p.id }); } },
-      h('div', { class: 'row' }, crown ? img('h_coroa.png', { class: 'crown' }) : null, h('span', { class: 'n' }, p.nick), h('span', { class: 'chip' }, 'NV ' + p.level)),
-      h('div', { class: 'bar' + (integrity(p) > 0.5 ? ' green' : '') }, h('i', { style: `width:${pct(integrity(p))}` }))));
+      h('div', { class: 'row' }, crown ? img('h_coroa.png', { class: 'crown' }) : null, h('span', { class: 'n' }, p.nick)),
+      h('div', { class: 'row' }, h('div', { class: 'bar' + (integrity(p) > 0.5 ? ' green' : ''), style: 'flex:1' }, h('i', { style: `width:${pct(integrity(p))}` })), h('span', { class: 'chip' }, 'NV ' + p.level))));
     if (p.shieldUntil) {
-      lot.append(h('div', { class: 'tag', style: `left:14px;top:${plateY + 52}px` },
+      lot.append(h('div', { class: 'tag', style: `left:12px;top:${row === 0 ? plateY - 22 : plateY + 58}px` },
         (p.fallen ? 'EM RUÍNAS · ' : 'ESCUDO · ') + fmtClock(p.shieldUntil - t).slice(0, 5)));
     }
     world.append(lot);
@@ -208,8 +208,9 @@ function renderWorld() {
     const mine = me() && p.id === me().id;
     if (!mine && !(p.seenAt && t - p.seenAt < 86400000)) continue;
     const { x, row } = lotPos(p.lot);
-    const cy = row === 0 ? ROAD_Y - 14 : ROAD_Y + 18;
-    world.append(h('div', { class: 'char' + (mine ? ' me' : ''), id: mine ? 'my-char' : null, style: `left:${x + 186}px;top:${cy}px`, 'data-home': `${x + 186},${cy}` },
+    const cy = row === 0 ? ROAD_Y - 16 : ROAD_Y + 22;
+    const cx = row === 0 ? x + 196 : x + 30;
+    world.append(h('div', { class: 'char' + (mine ? ' me' : ''), id: mine ? 'my-char' : null, style: `left:${cx}px;top:${cy}px` },
       h('span', { class: 'lbl' }, mine ? 'Você' : p.nick), img(`char${p.color}.png`)));
   }
 

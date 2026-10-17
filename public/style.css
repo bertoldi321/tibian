@@ -71,10 +71,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .lot .spr { left: 0; top: 0; width: 288px; height: 328px; }
 .lot:hover .spr.base { filter: brightness(1.08); }
 .lot.mine .spr.base { filter: drop-shadow(0 0 0 transparent); }
-.plate { position: absolute; left: 8px; display: flex; flex-direction: column; gap: 4px; width: 128px; padding: 5px 8px 6px; border: 0; cursor: pointer; text-align: left;
+.plate { position: absolute; left: 8px; display: flex; flex-direction: column; gap: 4px; width: 148px; padding: 5px 8px 6px; border: 0; cursor: pointer; text-align: left;
   background: var(--wood); box-shadow: 0 0 0 2px var(--wood-edge), inset 0 2px 0 var(--wood-hi), inset 0 -3px 0 var(--wood-lo); }
 .plate .row { display: flex; align-items: center; gap: 6px; }
-.plate .n { flex: 1; font-size: 15px; font-weight: 600; color: #fff3d6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plate .n { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: #fff3d6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plate .bar { height: 5px; }
 .plate.mine { box-shadow: 0 0 0 2px var(--wood-edge), 0 0 0 5px var(--green), inset 0 2px 0 var(--wood-hi), inset 0 -3px 0 var(--wood-lo); }
 .plate.mine .n { color: #d8ffc8; font-weight: 700; }
